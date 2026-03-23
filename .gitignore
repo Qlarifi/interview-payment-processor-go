@@ -1,0 +1,17 @@
+# Build
+payment-processor
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Interview guide
+INTERVIEW_GUIDE.md
