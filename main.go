@@ -15,7 +15,7 @@ import (
 
 func main() {
 	visibilityTimeout := envInt("QUEUE_VISIBILITY_TIMEOUT_SECONDS", 30)
-	threadCount := envInt("WORKER_THREAD_COUNT", 4)
+	workerCount := envInt("WORKER_THREAD_COUNT", 4)
 	pollIntervalMs := envInt("WORKER_POLL_INTERVAL_MS", 500)
 	port := envString("PORT", "8080")
 
@@ -23,10 +23,10 @@ func main() {
 	paymentStore := store.NewPaymentStore()
 	paymentService := service.NewPaymentService(paymentStore)
 
-	queueConsumer := consumer.NewPaymentQueueConsumer(paymentQueue, paymentService, pollIntervalMs, threadCount)
+	queueConsumer := consumer.NewPaymentQueueConsumer(paymentQueue, paymentService, pollIntervalMs, workerCount)
 	queueConsumer.Start()
 	log.Printf("started %d worker goroutines (poll interval %dms, visibility timeout %ds)",
-		threadCount, pollIntervalMs, visibilityTimeout)
+		workerCount, pollIntervalMs, visibilityTimeout)
 
 	mux := http.NewServeMux()
 	paymentHandler := handler.NewPaymentHandler(paymentQueue, paymentService)

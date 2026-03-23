@@ -12,26 +12,26 @@ type PaymentQueueConsumer struct {
 	queue          queue.PaymentMessageQueue
 	service        *service.PaymentService
 	pollIntervalMs int
-	threadCount    int
+	workerCount    int
 }
 
 func NewPaymentQueueConsumer(
 	q queue.PaymentMessageQueue,
 	svc *service.PaymentService,
 	pollIntervalMs int,
-	threadCount int,
+	workerCount int,
 ) *PaymentQueueConsumer {
 	return &PaymentQueueConsumer{
 		queue:          q,
 		service:        svc,
 		pollIntervalMs: pollIntervalMs,
-		threadCount:    threadCount,
+		workerCount:    workerCount,
 	}
 }
 
 // Start launches worker goroutines that poll the queue and process messages.
 func (c *PaymentQueueConsumer) Start() {
-	for i := 1; i <= c.threadCount; i++ {
+	for i := 1; i <= c.workerCount; i++ {
 		go c.pollLoop(i)
 	}
 }

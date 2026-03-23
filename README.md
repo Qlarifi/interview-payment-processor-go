@@ -4,7 +4,7 @@ A Go application that processes payment messages from an in-memory queue using m
 
 ## Prerequisites
 
-- Go 1.22+
+- Go 1.26+
 
 ## Build
 

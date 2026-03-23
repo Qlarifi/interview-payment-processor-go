@@ -4,14 +4,18 @@ import (
 	"log"
 
 	"github.com/socure/interview-payment-processor-go/model"
-	"github.com/socure/interview-payment-processor-go/store"
 )
 
-type PaymentService struct {
-	store *store.PaymentStore
+type PaymentStore interface {
+	Save(paymentID string, amount float64) model.Payment
+	FindRecent(limit int) []model.Payment
 }
 
-func NewPaymentService(store *store.PaymentStore) *PaymentService {
+type PaymentService struct {
+	store PaymentStore
+}
+
+func NewPaymentService(store PaymentStore) *PaymentService {
 	return &PaymentService{store: store}
 }
 
