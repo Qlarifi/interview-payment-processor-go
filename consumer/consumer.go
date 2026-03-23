@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -30,17 +31,30 @@ func NewPaymentQueueConsumer(
 }
 
 // Start launches worker goroutines that poll the queue and process messages.
-func (c *PaymentQueueConsumer) Start() {
+// Goroutines exit when ctx is cancelled.
+func (c *PaymentQueueConsumer) Start(ctx context.Context) {
 	for i := 1; i <= c.workerCount; i++ {
-		go c.pollLoop(i)
+		go c.pollLoop(ctx, i)
 	}
 }
 
-func (c *PaymentQueueConsumer) pollLoop(workerID int) {
+func (c *PaymentQueueConsumer) pollLoop(ctx context.Context, workerID int) {
 	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("worker %d shutting down", workerID)
+			return
+		default:
+		}
+
 		msg := c.queue.Receive()
 		if msg == nil {
-			time.Sleep(time.Duration(c.pollIntervalMs) * time.Millisecond)
+			select {
+			case <-ctx.Done():
+				log.Printf("worker %d shutting down", workerID)
+				return
+			case <-time.After(time.Duration(c.pollIntervalMs) * time.Millisecond):
+			}
 			continue
 		}
 		log.Printf("worker %d processing payment %s", workerID, msg.PaymentID)

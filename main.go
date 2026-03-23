@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/socure/interview-payment-processor-go/consumer"
 	"github.com/socure/interview-payment-processor-go/handler"
@@ -19,12 +22,15 @@ func main() {
 	pollIntervalMs := envInt("WORKER_POLL_INTERVAL_MS", 500)
 	port := envString("PORT", "8080")
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	paymentQueue := queue.NewInMemoryPaymentQueue(visibilityTimeout)
 	paymentStore := store.NewPaymentStore()
 	paymentService := service.NewPaymentService(paymentStore)
 
 	queueConsumer := consumer.NewPaymentQueueConsumer(paymentQueue, paymentService, pollIntervalMs, workerCount)
-	queueConsumer.Start()
+	queueConsumer.Start(ctx)
 	log.Printf("started %d worker goroutines (poll interval %dms, visibility timeout %ds)",
 		workerCount, pollIntervalMs, visibilityTimeout)
 
@@ -32,9 +38,16 @@ func main() {
 	paymentHandler := handler.NewPaymentHandler(paymentQueue, paymentService)
 	paymentHandler.Register(mux)
 
-	addr := ":" + port
-	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	srv := &http.Server{Addr: ":" + port, Handler: mux}
+	log.Printf("listening on :%s", port)
+
+	go func() {
+		<-ctx.Done()
+		log.Println("shutting down")
+		srv.Shutdown(context.Background()) //nolint:errcheck
+	}()
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
