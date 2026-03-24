@@ -13,7 +13,7 @@ type PaymentMessageQueue interface {
 	Submit(message model.PaymentMessage)
 
 	// Receive returns the next available message. The message should not be
-	// visible to other consumers until the visibility timeout expires or it
+	// visible to other workers until the visibility timeout expires or it
 	// is acknowledged.
 	// Returns nil if no message is available.
 	Receive() *model.PaymentMessage
@@ -25,7 +25,7 @@ type PaymentMessageQueue interface {
 
 // InMemoryPaymentQueue is an in-memory implementation of the payment message queue.
 // Messages are held in a single pending queue. Receive returns the next message
-// and the implementation is expected to hide it from other consumers until
+// and the implementation is expected to hide it from other workers until
 // the visibility timeout expires or the message is acknowledged.
 type InMemoryPaymentQueue struct {
 	mu                       sync.Mutex

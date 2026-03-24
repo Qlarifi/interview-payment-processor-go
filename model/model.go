@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// PaymentMessage represents a single unit of work consumed from the queue by a worker.
+// PaymentMessage represents a single unit of work pulled from the queue by a worker.
 type PaymentMessage struct {
 	MessageID string  `json:"messageId"`
 	PaymentID string  `json:"paymentId"`

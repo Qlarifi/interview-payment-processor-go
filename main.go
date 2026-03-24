@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/socure/interview-payment-processor-go/consumer"
+	"github.com/socure/interview-payment-processor-go/worker"
 	"github.com/socure/interview-payment-processor-go/handler"
 	"github.com/socure/interview-payment-processor-go/queue"
 	"github.com/socure/interview-payment-processor-go/service"
@@ -29,8 +29,8 @@ func main() {
 	paymentStore := store.NewPaymentStore()
 	paymentService := service.NewPaymentService(paymentStore)
 
-	queueConsumer := consumer.NewPaymentQueueConsumer(paymentQueue, paymentService, pollIntervalMs, workerCount)
-	queueConsumer.Start(ctx)
+	queueWorker := worker.NewPaymentQueueWorker(paymentQueue, paymentService, pollIntervalMs, workerCount)
+	queueWorker.Start(ctx)
 	log.Printf("started %d worker goroutines (poll interval %dms, visibility timeout %ds)",
 		workerCount, pollIntervalMs, visibilityTimeout)
 

@@ -1,4 +1,4 @@
-package consumer
+package worker
 
 import (
 	"context"
@@ -9,20 +9,20 @@ import (
 	"github.com/socure/interview-payment-processor-go/service"
 )
 
-type PaymentQueueConsumer struct {
+type PaymentQueueWorker struct {
 	queue          queue.PaymentMessageQueue
 	service        *service.PaymentService
 	pollIntervalMs int
 	workerCount    int
 }
 
-func NewPaymentQueueConsumer(
+func NewPaymentQueueWorker(
 	q queue.PaymentMessageQueue,
 	svc *service.PaymentService,
 	pollIntervalMs int,
 	workerCount int,
-) *PaymentQueueConsumer {
-	return &PaymentQueueConsumer{
+) *PaymentQueueWorker {
+	return &PaymentQueueWorker{
 		queue:          q,
 		service:        svc,
 		pollIntervalMs: pollIntervalMs,
@@ -32,13 +32,13 @@ func NewPaymentQueueConsumer(
 
 // Start launches worker goroutines that poll the queue and process messages.
 // Goroutines exit when ctx is cancelled.
-func (c *PaymentQueueConsumer) Start(ctx context.Context) {
-	for i := 1; i <= c.workerCount; i++ {
-		go c.pollLoop(ctx, i)
+func (w *PaymentQueueWorker) Start(ctx context.Context) {
+	for i := 1; i <= w.workerCount; i++ {
+		go w.pollLoop(ctx, i)
 	}
 }
 
-func (c *PaymentQueueConsumer) pollLoop(ctx context.Context, workerID int) {
+func (w *PaymentQueueWorker) pollLoop(ctx context.Context, workerID int) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -47,13 +47,13 @@ func (c *PaymentQueueConsumer) pollLoop(ctx context.Context, workerID int) {
 		default:
 		}
 
-		msg := c.queue.Receive()
+		msg := w.queue.Receive()
 		if msg == nil {
 			select {
 			case <-ctx.Done():
 				log.Printf("worker %d shutting down", workerID)
 				return
-			case <-time.After(time.Duration(c.pollIntervalMs) * time.Millisecond):
+			case <-time.After(time.Duration(w.pollIntervalMs) * time.Millisecond):
 			}
 			continue
 		}
@@ -64,8 +64,8 @@ func (c *PaymentQueueConsumer) pollLoop(ctx context.Context, workerID int) {
 					log.Printf("worker %d failed to process payment %s: %v", workerID, msg.PaymentID, r)
 				}
 			}()
-			c.service.ProcessPayment(*msg)
-			c.queue.Ack(msg.MessageID)
+			w.service.ProcessPayment(*msg)
+			w.queue.Ack(msg.MessageID)
 		}()
 	}
 }
