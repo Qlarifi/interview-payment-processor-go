@@ -42,7 +42,7 @@ The app will:
   curl -s http://localhost:8080/api/payments/recent | jq
   ```
 
-  Optional query param: `limit` (default 10, max 100). Example: `curl -s http://localhost:8080/api/payments/recent?limit=25 | jq`
+  Optional query param: `limit` (default 10, max 100). Example: `curl -s "http://localhost:8080/api/payments/recent?limit=25" | jq`
 
   Returns `200 OK` with a JSON array of payment objects (`id`, `paymentId`, `amount`, `createdAt`).
 
